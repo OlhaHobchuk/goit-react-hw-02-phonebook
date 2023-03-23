@@ -3,6 +3,7 @@ import shortid from 'shortid';
 import { Filter } from './Filter/Filter';
 import { ContactList } from './ContactList/ContactList';
 import { ContactForm } from './ContactForm/ContactForm';
+import { Notification } from './Notification/Notification';
 
 export class App extends Component {
   state = {
@@ -16,20 +17,19 @@ export class App extends Component {
   };
 
   addContact = ({ name, number }) => {
-    console.log({ name, number });
+    const isOnContacts = this.state.contacts.find(item => {
+      return item.name === contact.name;
+    });
+    if (isOnContacts) {
+      return alert(`${name} is already in contacts`);
+    }
+
     const contact = {
       id: shortid.generate(),
       name,
       number,
     };
 
-    if (
-      this.state.contacts.find(item => {
-        return item.name === contact.name;
-      })
-    ) {
-      return alert(`${contact.name} is already in contacts`);
-    }
     this.setState(prevState => ({
       contacts: [contact, ...prevState.contacts],
     }));
@@ -45,14 +45,17 @@ export class App extends Component {
     }));
   };
 
-  render() {
-    const filterContact = this.state.contacts.filter(contact => {
+  getFilteredContacts = () => {
+    return this.state.contacts.filter(contact => {
       return contact.name
         .toLowerCase()
         .includes(this.state.filter.toLowerCase());
     });
-
+  };
+  render() {
     const { contacts } = this.state;
+    const filteredContact = this.getFilteredContacts();
+
     return (
       <div
         style={{
@@ -67,12 +70,18 @@ export class App extends Component {
         <h1 style={{ marginTop: 0 }}>Phonebook</h1>
         <ContactForm onSubmit={this.addContact} />
         <h2>Contacts</h2>
-        <Filter onFilterChange={this.filterChange} />
-        <ContactList
-          contacts={contacts}
-          onDeleteContact={this.deleteContact}
-          filter={filterContact}
-        />
+
+        {contacts.length ? (
+          <>
+            <Filter onFilterChange={this.filterChange} />
+            <ContactList
+              contacts={filteredContact}
+              onDeleteContact={this.deleteContact}
+            />
+          </>
+        ) : (
+          <Notification message="There is no contacts" />
+        )}
       </div>
     );
   }
